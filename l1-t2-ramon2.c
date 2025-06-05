@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include "teclado.h"
 
+#define HEIGHT 4
+#define WIDTH 4
+
 void cor_letra(int r, int g, int b) // Troca a cor da letra
 {
     printf("%c[38;2;%d;%d;%dm", 27, r, g, b);
@@ -69,7 +72,7 @@ void zero() // Função que define a cor do quadrado para o valor zero. Faz pare
     cor_letra(0,0,0); // Define a letra como preta
 }
 
-void printaMatriz(int u[][4], int tam){
+void printaMatriz(int u[][4], int tam, int col, int linha){
     divisoria_horizontal();
     for(int i = 0 ; i < tam ; i++){
         for( int j = 0 ; j < tam ; j++){
@@ -97,18 +100,19 @@ void printaMatriz(int u[][4], int tam){
             }
         }
     }
+    printf("linha: %d  Coluna: %d", linha, col);
     putchar('\n');
 }
 
-int moveCima(int u[][4]) // Função que move o slide para cima
+int moveCima(int u[][4], int numero) // Função que move o slide para cima
 {
     int temp;
     for( int i = 0 ; i < 4 ; i++){
         for( int j = 0 ; j < 4 ; j++){
-            if(u[i][j] == 0){
+            if(u[i][j] == numero){
                 if(i+1 < 4){
                     temp = u[i+1][j];
-                    u[i+1][j] = 0;
+                    u[i+1][j] = numero;
                     u[i][j] = temp;
                     j=4;
                     i=4;
@@ -121,15 +125,15 @@ int moveCima(int u[][4]) // Função que move o slide para cima
     return 1;
 }
 
-int moveBaixo(int u[][4]) // Função que move o slide para baixo
+int moveBaixo(int u[][4], int numero) // Função que move o slide para baixo
 {
     int temp;
     for( int i = 0 ; i < 4 ; i++){
         for( int j = 0 ; j < 4 ; j++){
-            if(u[i][j] == 0){
+            if(u[i][j] == numero){
                 if(i-1 >= 0){
                     temp = u[i-1][j];
-                    u[i-1][j] = 0;
+                    u[i-1][j] = numero;
                     u[i][j] = temp; 
                 } else {
                     return 0;
@@ -140,15 +144,15 @@ int moveBaixo(int u[][4]) // Função que move o slide para baixo
     return 1;
 }
 
-int moveDireita(int u[][4]) // Função que move o slide para a direita
+int moveDireita(int u[][4], int numero) // Função que move o slide para a direita
 {
     int temp;
     for( int i = 0 ; i < 4 ; i++){
         for( int j = 0 ; j < 4 ; j++){
-            if(u[i][j] == 0){
+            if(u[i][j] == numero){
                 if(j-1 >= 0){
                     temp = u[i][j-1];
-                    u[i][j-1] = 0;
+                    u[i][j-1] = numero;
                     u[i][j] = temp; 
                 } else {
                     return 0;
@@ -159,15 +163,15 @@ int moveDireita(int u[][4]) // Função que move o slide para a direita
     return 1;
 }
 
-int moveEsquerda(int u[][4]) // Função que move o slide para a esquerda
+int moveEsquerda(int u[][4], int numero) // Função que move o slide para a esquerda
 {
     int temp;
     for( int i = 0 ; i < 4 ; i++){
         for( int j = 0 ; j < 4 ; j++){
-            if(u[i][j] == 0){
+            if(u[i][j] == numero){
                 if(j+1 < 4){
                     temp = u[i][j+1];
-                    u[i][j+1] = 0;
+                    u[i][j+1] = numero;
                     u[i][j] = temp; 
                     j =4;
                     i =4;
@@ -180,27 +184,27 @@ int moveEsquerda(int u[][4]) // Função que move o slide para a esquerda
     return 1;
 }
 
-void embaralha(int u[][4]) // Função que embaralha a matriz. Funciona fazendo 50 jogadas válidas.
+void embaralha(int u[][4], int numero) // Função que embaralha a matriz. Funciona fazendo 50 jogadas válidas.
 {
     int i = 0; // Contador de jogadas válidas. Serve para garantir que sejam executadas 50 jogadas válidas
     srand(time(NULL));
     while( i < 51 ){
         int random = rand() % 4+1;
         if(random == 1){
-            if(moveCima(u) == 1) // Esses if's chamam a função. Se retornar 1, significa que o movimento foi executado pois era válido e soma no contador, senão, ela não soma no contador.
+            if(moveCima(u, numero) == 1) // Esses if's chamam a função. Se retornar 1, significa que o movimento foi executado pois era válido e soma no contador, senão, ela não soma no contador.
             {
                 i++;
             }
         } else if(random == 2){
-            if(moveDireita(u) == 1){
+            if(moveDireita(u, numero) == 1){
                 i++;
             }
         } else if(random == 3){
-            if(moveBaixo(u) == 1){
+            if(moveBaixo(u, numero) == 1){
                 i++;
             }
         } else if(random == 4){
-            if(moveEsquerda(u) == 1){
+            if(moveEsquerda(u, numero) == 1){
                 i++;
             }
         }
@@ -210,14 +214,12 @@ void embaralha(int u[][4]) // Função que embaralha a matriz. Funciona fazendo 
 
 void inicializa(int u[][4], int tam) // Inicializa a função
 {
-    int v = 1;
     for( int i = 0 ; i<tam ; i++){
         for( int j = 0 ; j<4 ; j++){
-            u[i][j] = v;
-            v++;
+            u[i][j] = j+1;
+            
         }
     }
-    u[3][3] = 0;
 }
 
 int compMat(int u[][4], int v[][4]){
@@ -261,41 +263,49 @@ int move_across(int u[][4], int linha, int lado)
  
 
 int main(){
-    int x = 0;
+    char x = '0';
     int v = 0;
     int u[4][4];
+
     inicializa(u, 4);
-    embaralha(u);
+
+    embaralha(u, 4);
+
     puts("Bem-vindo ao jogo de deslizar números");
     
-
-    printaMatriz(u, 4);
-    // Função que inicia o terminal raw
-
     int linha = 0;
+    int col = 0;
+
+    printaMatriz(u, 4, col, linha);
+
+    
     do{
-        tec_inicia();
-        tecla_t tec = tec_tecla();
-        tec_fim();
-        
-        
-        if(tec == T_ESQUERDA){
+        scanf("%d", &x);
+        if(x == 'a'){
             move_across(u, linha, -1);
-            printaMatriz(u, 4);
-        } else if(tec == T_CIMA){
+            printaMatriz(u, 4, col, linha);
+        } else if(x == 's'){
             if(linha-1 >= 0){
                 linha--;
             }
-        } else if(tec == T_DIREITA){
+        } else if(x == 'd'){
             move_across(u, linha, 1);
-            printaMatriz(u, 4);
-        } else if(tec == T_BAIXO){
-            if(linha+1 < 4){
+            printaMatriz(u, 4, col, linha);
+        } else if(x == 'w'){
+            if(linha+1 < HEIGHT){
                 linha++;
             }
-        } else if(tec == T_END) break;
+            printaMatriz(u, 4, col, linha);
+        } else if(x == 'c') {
+            if(col+1 < WIDTH){
+                col++;
+            } else {
+                col = 0;
+            }
+            printaMatriz(u, 4, col, linha);
+        }
+        else if(x == 'f') break;
     }while(vitoria(u) == false);
-    // Função que encerra o terminal raw
-    printaMatriz(u, 4);
+    printaMatriz(u, 4, col, linha);
     printf("\n```Parabens!! Voce ganhou!!´´´");
 }
