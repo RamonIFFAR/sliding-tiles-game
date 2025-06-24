@@ -88,8 +88,6 @@ void numeros(int nQ) // Função que define as cores para os números que não s
             cor_fundo(255, 255, 255); 
             break;
     }
-    
-    cor_letra(0, 0, 0); // Deixa a letra preta por contraste
 }
 
 void printaMatriz(int *u, int col, int linha, int HEIGHT, int WIDTH){
@@ -128,7 +126,7 @@ int moveBaixo(int *u, int i, int j, int HEIGHT, int WIDTH) // Função que move 
     return 0;
 }
 
-void inicializa(int *u, int altura, int largura) // Inicializa a função
+void inicializa(int *u, int altura, int largura, int numCores) // Inicializa a função
 {
     int cor = 1, pos;
     for( int i = 0 ; i<altura ; i++){
@@ -136,7 +134,8 @@ void inicializa(int *u, int altura, int largura) // Inicializa a função
             pos = i*largura + j;
             *(u+pos) = cor;
             cor++;
-            if(cor == 5){
+            printf("numCores: %d", numCores);
+            if(cor > numCores){
                 cor = 1;
             }
         }
@@ -242,67 +241,71 @@ void detonaLinha(int linha, int *u, int WIDTH)
     restauraLinha(linha, WIDTH, u);
 }
 
-int buscaTopo(int *u, int HEIGHT, int WIDTH, int col)
+int buscaTopo(int *u, int HEIGHT, int WIDTH, int col, int busca)
 {
-    int linha = -1;
-    printf("\n\nColuna que buscou o topo: %d", *(u+((HEIGHT-1)*WIDTH+col)));
-    for( int i = HEIGHT-1 ; i >=0 && *(u+(i*WIDTH+col)) != 0; i--){
-        linha = i;
+    for( int i = WIDTH-1 ; i>=0 ; i--){
+        if(*(u+i*WIDTH+col) == 0 && busca == 0){
+            return i;
+        } else if (*(u+i*WIDTH+col) == 0 && busca == 1 && i+1 < WIDTH){
+            return i+1;
+        }
     }
-    
-    return linha;
+    return -1;
 }
 
-int buscaEspaco(int *u, int *nC, int Ca, int WIDTH, int HEIGHT)
+int buscaEspaco(int *u, int *nC, int Ca, int WIDTH, int HEIGHT, int lado)
 {
     int posE = Ca-1, posD = Ca+1;
-    int AE = buscaTopo(u, HEIGHT, WIDTH, posE), AD = buscaTopo(u, HEIGHT, WIDTH, posD);
-    int mod = -1;
-
-    if(Ca == 0)
-    {
+    int teste;
+    if(posD >= WIDTH){
+        posD -= Ca+1;
+        printf("\nsoma da pos na direita: %d", posD);
+    }
+    if(posE < 0){
         posE = WIDTH-1;
-    } else if (Ca == WIDTH-1){
-        posD = -WIDTH+1;
+        printf("\nsoma da pos na esquerda: %d", posE);
     }
-
-    if(*(u+posE) == 0)
-    {
-        *nC = posE;
-        mod = 1;
+    if(lado == 1){
+        teste = buscaTopo(u, HEIGHT, WIDTH, posD*-1, 0);
+        if( teste != -1){
+            *nC = posD;
+            printf("\nResultado da busca: %d", *nC);
+            return 1;
+        }
+    } else {
+        teste = buscaTopo(u, HEIGHT, WIDTH, posE, 0);
+        printf("Return do busca topo: %d", teste);
+        if( teste != -1){
+            *nC = posE;
+            printf("\nResultado da busca: %d", *nC);
+            return 1;
+        }
     }
-    printf("\n\nAE: %d", AE);
-    printf("\nAD: %d", AD);
-
-    if(*(u+posD) == 0 && AD > AE)
-    {
-        *nC = posD;
-        mod = 1;
-    }
-
-    printf("VnC: %d", *nC);
-
-    if(mod != -1){
-        return 1;
-    }
+    return -1;
+    
 }
 
-
-void movePeca(int *u, int linha, int col, int WIDTH, int HEIGHT)
+void movePeca(int *u, int linha, int col, int WIDTH, int HEIGHT, int lado)
 {
+        if(linha == -1){
+            return;
+        }
     
-        int nP, enc = buscaEspaco(u, &nP, col, WIDTH, HEIGHT);
+        int nP, enc = buscaEspaco(u, &nP, col, WIDTH, HEIGHT, lado);
         int posAtual = linha*WIDTH+col;
+        printf("\nposAtual: %d", posAtual);
         if( enc != -1){
+            printf("\nValor na posição de NP: %d", *(u+nP));
+            printf("\nValor na posição de anterior: %d", *(u+posAtual));
             *(u+nP) = *(u+posAtual);
             *(u+posAtual) = 0;
         }
         
 }
 
-void elevaNivel(int *v, int altura, int largura)
-{
-    inicializa(v, altura, largura); 
+void aumentacores(int *u, int HEIGHT, int WIDTH, int *numCores){
+    *numCores += 1;
+    inicializa(u, HEIGHT, WIDTH, *numCores);
 }
 
 
@@ -311,8 +314,9 @@ int main(){
 
     int HEIGHT = 5;
     int WIDTH = 6;
+    int numCores = 4;
     int *u = malloc(HEIGHT*WIDTH*sizeof(int));
-    inicializa(u, HEIGHT, WIDTH);
+    inicializa(u, HEIGHT, WIDTH, numCores);
 
     puts("Bem-vindo ao jogo de deslizar números");
     
@@ -356,17 +360,17 @@ int main(){
 
             detonaLinha(linha, u, WIDTH);
 
-        } else if(x == 7){
-
-            movePeca(u, buscaTopo(u, HEIGHT, WIDTH, col), col, WIDTH, HEIGHT);
-
         } else if(x == 8){
-            HEIGHT++;
-            WIDTH++;
-            elevaNivel(u, HEIGHT, WIDTH); // Está com problemas e precisa ser arrumado
+            
+            movePeca(u, buscaTopo(u, HEIGHT, WIDTH, col, 1), col, WIDTH, HEIGHT, 1);
 
+        } else if(x == 7){
+            movePeca(u, buscaTopo(u, HEIGHT, WIDTH, col, 1), col, WIDTH, HEIGHT, -1);
+
+        } else if(x == 9){
+            aumentacores(u, HEIGHT, WIDTH, &numCores);
         }
-        detonaColuna(u, WIDTH, HEIGHT);
+        //detonaColuna(u, WIDTH, HEIGHT);
         quedaBloco(u, HEIGHT, WIDTH);
         printaMatriz(u, col, linha, HEIGHT, WIDTH);
     }while(x != 0);
